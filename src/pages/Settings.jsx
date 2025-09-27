@@ -15,7 +15,7 @@ export default function Settings() {
         setLoading(false);
       })
       .catch(() => {
-        setMessage("❌ Failed to load settings");
+        setMessage("Failed to load settings");
         setLoading(false);
       });
   }, []);
