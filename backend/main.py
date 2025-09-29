@@ -1,17 +1,23 @@
-# main.py
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List
 from datetime import datetime
 import random
 
-app = FastAPI(title="Debugons Rockfall Prediction Backend")
+# ------------------------
+# App Initialization
+# ------------------------
+app = FastAPI(
+    title="Debugons Rockfall Prediction Backend",
+    version="1.0.0",
+    description="Backend service for rockfall prediction, alerts, and simulations"
+)
 
 # ------------------------
 # Placeholder Alert Sender
 # ------------------------
 def send_alert_via_sms(to_number: str, message: str):
-    # Later replace this with Twilio
+    # Placeholder: Replace with Twilio, Firebase, or WhatsApp API later
     print(f"[SIMULATION] SMS to {to_number}: {message}")
 
 # ------------------------
@@ -31,22 +37,28 @@ class Simulation(BaseModel):
     blastingLevel: float = 0
 
 # ------------------------
-# In-Memory State
+# In-Memory State (Temporary)
 # ------------------------
 simulation = Simulation()
 alerts: List[Alert] = [
-    Alert(id=1, zone="Sector A", msg="Rockfall detected", severity="High", time=datetime.now().isoformat()),
+    Alert(
+        id=1,
+        zone="Sector A",
+        msg="Rockfall detected",
+        severity="High",
+        time=datetime.now().isoformat()
+    )
 ]
 
 # ------------------------
-# APIs
+# Routes
 # ------------------------
-
 @app.get("/")
 def root():
     return {"msg": "✅ Debugons Backend Running", "time": datetime.now()}
 
-@app.get("/api/alerts")
+# ---- Alerts ----
+@app.get("/api/alerts", response_model=List[Alert])
 def get_alerts():
     return alerts
 
@@ -56,11 +68,10 @@ def ack_alert(alert_id: int):
         if alert.id == alert_id:
             alert.acknowledged = True
             return {"msg": "Alert acknowledged", "alert": alert}
-    return {"error": "Alert not found"}
+    raise HTTPException(status_code=404, detail="Alert not found")
 
 @app.post("/api/alerts/send")
 def send_custom_alert(to_number: str, message: str):
-    # Here Twilio will be integrated later
     send_alert_via_sms(to_number, message)
     new_alert = Alert(
         id=len(alerts) + 1,
@@ -72,7 +83,8 @@ def send_custom_alert(to_number: str, message: str):
     alerts.append(new_alert)
     return {"msg": "Alert created & SMS simulated", "alert": new_alert}
 
-@app.get("/api/simulation")
+# ---- Simulation ----
+@app.get("/api/simulation", response_model=Simulation)
 def get_simulation():
     return simulation
 
@@ -80,10 +92,11 @@ def get_simulation():
 def update_simulation(new_sim: Simulation):
     global simulation
     simulation = new_sim
-    # Example: trigger alert if rainfall is too high
+
+    # Example trigger
     if simulation.rainfallMm > 200:
-        msg = f"Heavy rainfall detected ({simulation.rainfallMm}mm)"
-        send_alert_via_sms("+91XXXXXXXXXX", msg)  # Placeholder number
+        msg = f"⚠️ Heavy rainfall detected ({simulation.rainfallMm}mm)"
+        send_alert_via_sms("+91XXXXXXXXXX", msg)
         alerts.append(
             Alert(
                 id=len(alerts) + 1,
@@ -95,6 +108,7 @@ def update_simulation(new_sim: Simulation):
         )
     return {"msg": "Simulation updated", "simulation": simulation}
 
+# ---- Predictions ----
 @app.get("/api/predictions")
 def get_predictions():
     labels = ["Now", "1h", "3h", "6h", "12h"]

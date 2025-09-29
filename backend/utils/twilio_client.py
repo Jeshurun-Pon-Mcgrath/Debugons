@@ -1,6 +1,5 @@
 from twilio.rest import Client
 
-# Set your Twilio credentials
 ACCOUNT_SID = "ACe8ae1627988301b26e50f2f82b518838"
 AUTH_TOKEN = "d782918318ba2b8660f342d77c9be5ad"
 TWILIO_NUMBER = "+1234567890"
@@ -16,5 +15,5 @@ def send_alert(to_number: str, message: str):
         )
         return True
     except Exception as e:
-        print("❌ Twilio Error:", e)
+        print("Twilio Error:", e)
         return False
